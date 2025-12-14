@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>投資スタイル診断 - あなたに最適な資産運用を見つけましょう</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Noto Sans JP', 'sans-serif'],
+          },
+          colors: {
+            navy: {
+              50: '#f0f4f8',
+              100: '#d9e2ec',
+              200: '#bcccdc',
+              300: '#9fb3c8',
+              400: '#829ab1',
+              500: '#627d98',
+              600: '#486581',
+              700: '#334e68',
+              800: '#243b53',
+              900: '#102a43',
+            },
+            gold: {
+              50: '#fffbeb',
+              100: '#fef3c7',
+              200: '#fde68a',
+              300: '#fcd34d',
+              400: '#fbbf24',
+              500: '#f59e0b',
+              600: '#d97706',
+              700: '#b45309',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      font-family: 'Noto Sans JP', sans-serif;
+    }
+    .fade-in {
+      animation: fadeIn 0.5s ease-in-out;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body class="bg-navy-50 min-h-screen">
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    // 投資家タイプ定義
+    const investorTypes = {
+      owl: {
+        id: 'owl',
+        name: 'フクロウ型',
+        emoji: '🦉',
+        title: '知識と冷静さで資産を守る慎重派',
+        color: 'from-navy-700 to-navy-800',
+        borderColor: 'border-navy-600',
+        bgColor: 'bg-navy-700',
+        description: '豊富な知識と冷静な判断力をお持ちのあなたは、じっくりと情報を集め、慎重に判断されるタイプです。長期的な視点で物事を見極める力があり、堅実な資産形成に向いていらっしゃいます。',
+        strengths: [
+          '情報収集力が高く、リスクを事前に把握できる',
+          '感情に流されず、冷静な判断ができる',
+          '長期的な視点で計画を立てられる'
+        ],
+        weaknesses: [
+          '慎重すぎて好機を逃すことがある',
+          '情報過多で判断が遅れることも'
+        ],
+        advice: '情報収集は大切ですが、適度なところで判断を下すことも重要です。信頼できる専門家のアドバイスも参考にされてはいかがでしょうか。',
+        recommendations: [
+          '国債・社債などの債券投資',
+          'バランス型投資信託',
+          '定期預金との組み合わせ'
+        ],
+        riskTolerance: '低〜中',
+        timeHorizon: '中〜長期'
+      },
+      turtle: {
+        id: 'turtle',
+        name: 'カメ型',
+        emoji: '🐢',
+        title: '着実に資産を積み上げる堅実派',
+        color: 'from-emerald-700 to-emerald-800',
+        borderColor: 'border-emerald-600',
+        bgColor: 'bg-emerald-700',
+        description: '一歩一歩着実に進むあなたは、急がず焦らず、確実な道を選ばれるタイプです。派手さはなくとも、時間をかけて資産を育てる忍耐力をお持ちです。',
+        strengths: [
+          '焦らず長期的に取り組める忍耐力',
+          'リスクを最小限に抑える慎重さ',
+          '計画通りに実行できる継続力'
+        ],
+        weaknesses: [
+          '変化への対応が遅れることがある',
+          '機会損失が生じる可能性も'
+        ],
+        advice: '堅実さは大きな武器です。ただし、インフレリスクも考慮し、元本保証だけでなく、少しずつ投資にも目を向けてみてはいかがでしょうか。',
+        recommendations: [
+          '個人向け国債（変動10年）',
+          '積立投資信託（インデックス型）',
+          '定期預金・財形貯蓄'
+        ],
+        riskTolerance: '低',
+        timeHorizon: '長期'
+      },
+      eagle: {
+        id: 'eagle',
+        name: 'ワシ型',
+        emoji: '🦅',
+        title: '好機を見極める戦略的投資家',
+        color: 'from-amber-700 to-amber-800',
+        borderColor: 'border-amber-600',
+        bgColor: 'bg-amber-700',
+        description: '高い視点から全体を見渡し、チャンスを見逃さないあなたは、戦略的な判断力をお持ちです。経験を活かした投資判断ができる、バランスの取れたタイプです。',
+        strengths: [
+          '大局的な視点で判断できる',
+          '経験に基づいた決断力がある',
+          'リスクとリターンのバランス感覚が優れている'
+        ],
+        weaknesses: [
+          '自信過剰になることがある',
+          '時に大きなリスクを取りすぎることも'
+        ],
+        advice: 'ご経験を活かしつつも、市場環境の変化には常にアンテナを張っておくことが大切です。分散投資でリスクを抑えながら、積極的な運用も検討されてはいかがでしょうか。',
+        recommendations: [
+          '高配当株式・ETF',
+          '不動産投資信託（REIT）',
+          'バランス型ファンド（積極運用型）'
+        ],
+        riskTolerance: '中〜高',
+        timeHorizon: '中期'
+      },
+      elephant: {
+        id: 'elephant',
+        name: 'ゾウ型',
+        emoji: '🐘',
+        title: '安定と信頼を重んじる資産家',
+        color: 'from-slate-600 to-slate-700',
+        borderColor: 'border-slate-500',
+        bgColor: 'bg-slate-600',
+        description: 'どっしりと構え、長い目で物事を見るあなたは、安定性と信頼性を最も重視されるタイプです。家族や次世代のことも考えた、責任感のある資産運用を心がけていらっしゃいます。',
+        strengths: [
+          '長期的な視野を持っている',
+          '家族・次世代を考えた計画性',
+          '感情に左右されない安定感'
+        ],
+        weaknesses: [
+          '新しい投資手法への抵抗感',
+          '保守的すぎる判断をすることも'
+        ],
+        advice: '安定志向は素晴らしい強みです。相続対策や資産の引き継ぎも視野に入れながら、信頼できる金融機関とじっくり相談されることをお勧めいたします。',
+        recommendations: [
+          '生命保険を活用した資産形成',
+          '国内債券中心のファンド',
+          '不動産投資（実物・REIT）'
+        ],
+        riskTolerance: '低',
+        timeHorizon: '長期'
+      }
+    };
+
+    // 質問データ
+    const questions = [
+      {
+        id: 1,
+        category: 'investment_behavior',
+        question: 'まとまった資金が入った場合、どのようにお使いになりますか？',
+        options: [
+          { text: 'まずは情報を集め、じっくり検討してから使い道を決める', scores: { owl: 3, turtle: 2, eagle: 1, elephant: 1 } },
+          { text: '安全な預金や国債など、元本が保証されるものに預ける', scores: { owl: 1, turtle: 3, eagle: 0, elephant: 2 } },
+          { text: '一部を投資に回し、リターンを狙いつつリスクも管理する', scores: { owl: 2, turtle: 1, eagle: 3, elephant: 1 } },
+          { text: '家族のためや将来の備えとして、慎重に保全する', scores: { owl: 1, turtle: 2, eagle: 0, elephant: 3 } }
+        ]
+      },
+      {
+        id: 2,
+        category: 'personality',
+        question: '投資において、最も重視されることは何でしょうか？',
+        options: [
+          { text: '十分な情報と根拠に基づいた判断', scores: { owl: 3, turtle: 1, eagle: 2, elephant: 1 } },
+          { text: '元本を減らさない安全性', scores: { owl: 1, turtle: 3, eagle: 0, elephant: 2 } },
+          { text: '適度なリターンとリスクのバランス', scores: { owl: 2, turtle: 1, eagle: 3, elephant: 1 } },
+          { text: '長期的な安定と家族への配慮', scores: { owl: 1, turtle: 2, eagle: 0, elephant: 3 } }
+        ]
+      },
+      {
+        id: 3,
+        category: 'investment_behavior',
+        question: '株価が下落したというニュースを聞いたとき、どのようにお感じになりますか？',
+        options: [
+          { text: '原因を調べ、今後の動向を分析してみたい', scores: { owl: 3, turtle: 1, eagle: 2, elephant: 1 } },
+          { text: '投資していなくてよかったと安心する', scores: { owl: 0, turtle: 3, eagle: 0, elephant: 2 } },
+          { text: '割安になった銘柄がないか確認してみたい', scores: { owl: 2, turtle: 0, eagle: 3, elephant: 0 } },
+          { text: '自分の資産への影響を確認し、必要なら相談する', scores: { owl: 1, turtle: 2, eagle: 1, elephant: 3 } }
+        ]
+      },
+      {
+        id: 4,
+        category: 'personality',
+        question: '老後の資金計画について、どのようにお考えでしょうか？',
+        options: [
+          { text: '様々なシミュレーションを行い、計画を立てている', scores: { owl: 3, turtle: 2, eagle: 1, elephant: 2 } },
+          { text: '年金と貯蓄で堅実に暮らせるよう準備している', scores: { owl: 1, turtle: 3, eagle: 0, elephant: 2 } },
+          { text: '資産運用で年金以外の収入源も確保したい', scores: { owl: 1, turtle: 0, eagle: 3, elephant: 1 } },
+          { text: '家族と相談しながら、無理のない計画を立てている', scores: { owl: 1, turtle: 2, eagle: 1, elephant: 3 } }
+        ]
+      },
+      {
+        id: 5,
+        category: 'lifestyle',
+        question: '大きな買い物をされる際、どのように判断されますか？',
+        options: [
+          { text: '複数の選択肢を比較検討し、納得してから決める', scores: { owl: 3, turtle: 2, eagle: 1, elephant: 1 } },
+          { text: '本当に必要かどうか、慎重に考えてから決める', scores: { owl: 1, turtle: 3, eagle: 0, elephant: 2 } },
+          { text: '品質と価格のバランスを見て、決断は早い方だ', scores: { owl: 1, turtle: 0, eagle: 3, elephant: 1 } },
+          { text: '家族の意見も聞き、皆が納得する形で決める', scores: { owl: 1, turtle: 1, eagle: 1, elephant: 3 } }
+        ]
+      },
+      {
+        id: 6,
+        category: 'investment_behavior',
+        question: '金融商品の説明を受ける際、どのような点を重視されますか？',
+        options: [
+          { text: 'リスクや手数料など、詳細な情報をしっかり確認したい', scores: { owl: 3, turtle: 2, eagle: 1, elephant: 1 } },
+          { text: '元本保証があるかどうかが最も気になる', scores: { owl: 1, turtle: 3, eagle: 0, elephant: 2 } },
+          { text: '過去の運用実績や将来の見通しに関心がある', scores: { owl: 2, turtle: 0, eagle: 3, elephant: 1 } },
+          { text: '信頼できる金融機関かどうかを重視する', scores: { owl: 1, turtle: 2, eagle: 1, elephant: 3 } }
+        ]
+      },
+      {
+        id: 7,
+        category: 'personality',
+        question: '資産を次世代に引き継ぐことについて、どのようにお考えでしょうか？',
+        options: [
+          { text: '相続税対策など、制度を調べて計画的に準備したい', scores: { owl: 3, turtle: 1, eagle: 2, elephant: 2 } },
+          { text: '確実に残せるよう、安全な形で保全しておきたい', scores: { owl: 1, turtle: 3, eagle: 0, elephant: 2 } },
+          { text: '資産を増やしてから引き継ぎたいと考えている', scores: { owl: 1, turtle: 0, eagle: 3, elephant: 1 } },
+          { text: '家族と話し合い、円満に引き継げるようにしたい', scores: { owl: 1, turtle: 1, eagle: 0, elephant: 3 } }
+        ]
+      }
+    ];
+
+    // スタート画面コンポーネント
+    function StartScreen({ onStart }) {
+      return (
+        <div className="fade-in max-w-2xl mx-auto px-4 py-8">
+          {/* ヘッダー */}
+          <div className="text-center mb-8">
+            <div className="inline-flex items-center justify-center w-20 h-20 bg-navy-700 rounded-full mb-4">
+              <span className="text-4xl">📊</span>
+            </div>
+            <h1 className="text-3xl md:text-4xl font-bold text-navy-800 mb-3">
+              投資スタイル診断
+            </h1>
+            <p className="text-xl text-navy-600 mb-2">
+              あなたに最適な資産運用を見つけましょう
+            </p>
+          </div>
+
+          {/* メインカード */}
+          <div className="bg-white rounded-2xl shadow-lg p-6 md:p-8 mb-6">
+            <p className="text-lg text-navy-700 leading-relaxed mb-6">
+              7つの質問に答えるだけで、あなたの投資スタイルを診断いたします。
+              <br /><br />
+              これまでのご経験や価値観から、あなたに合った資産運用のヒントをお伝えします。
+            </p>
+
+            {/* メタ情報 */}
+            <div className="flex justify-center gap-6 text-navy-600 mb-6">
+              <div className="flex items-center gap-2">
+                <span className="text-xl">📝</span>
+                <span className="text-lg">全7問</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xl">⏱️</span>
+                <span className="text-lg">約2分</span>
+              </div>
+            </div>
+
+            {/* タイププレビュー */}
+            <div className="bg-navy-50 rounded-xl p-4 mb-6">
+              <p className="text-center text-navy-600 mb-3">診断結果タイプ</p>
+              <div className="flex justify-center gap-4 flex-wrap">
+                {Object.values(investorTypes).map(type => (
+                  <div key={type.id} className="flex flex-col items-center">
+                    <span className="text-3xl mb-1">{type.emoji}</span>
+                    <span className="text-sm text-navy-600">{type.name}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* CTAボタン */}
+            <button
+              onClick={onStart}
+              className="w-full py-4 px-8 bg-gradient-to-r from-navy-700 to-navy-800 text-white text-xl font-bold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-300"
+            >
+              診断をはじめる
+            </button>
+          </div>
+
+          {/* 注意書き */}
+          <p className="text-center text-navy-500 text-sm">
+            ※ 本診断は投資判断の参考情報であり、特定の金融商品を推奨するものではございません
+          </p>
+        </div>
+      );
+    }
+
+    // 質問画面コンポーネント
+    function QuestionScreen({ question, questionIndex, totalQuestions, onAnswer }) {
+      const [selectedOption, setSelectedOption] = useState(null);
+
+      const handleSelect = (optionIndex) => {
+        setSelectedOption(optionIndex);
+        setTimeout(() => {
+          onAnswer(question.options[optionIndex].scores);
+          setSelectedOption(null);
+        }, 400);
+      };
+
+      const progressPercentage = ((questionIndex) / totalQuestions) * 100;
+
+      return (
+        <div className="fade-in max-w-2xl mx-auto px-4 py-8">
+          {/* プログレスバー */}
+          <div className="mb-8">
+            <div className="flex justify-between text-navy-600 mb-2">
+              <span className="text-lg font-medium">質問 {questionIndex + 1} / {totalQuestions}</span>
+              <span className="text-lg">{Math.round(progressPercentage)}%</span>
+            </div>
+            <div className="h-3 bg-navy-100 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-gradient-to-r from-navy-600 to-navy-700 rounded-full transition-all duration-500"
+                style={{ width: `${progressPercentage}%` }}
+              />
+            </div>
+          </div>
+
+          {/* 質問カード */}
+          <div className="bg-white rounded-2xl shadow-lg p-6 md:p-8">
+            {/* 質問番号バッジ */}
+            <div className="flex justify-center mb-4">
+              <span className="inline-flex items-center justify-center w-12 h-12 bg-navy-700 text-white text-xl font-bold rounded-full">
+                Q{questionIndex + 1}
+              </span>
+            </div>
+
+            {/* 質問文 */}
+            <h2 className="text-xl md:text-2xl font-bold text-navy-800 text-center mb-8 leading-relaxed">
+              {question.question}
+            </h2>
+
+            {/* 選択肢 */}
+            <div className="space-y-4">
+              {question.options.map((option, index) => (
+                <button
+                  key={index}
+                  onClick={() => handleSelect(index)}
+                  disabled={selectedOption !== null}
+                  className={`w-full p-5 text-left text-lg rounded-xl border-2 transition-all duration-300 ${
+                    selectedOption === index
+                      ? 'bg-navy-700 text-white border-navy-700 scale-[1.02]'
+                      : 'bg-white text-navy-700 border-navy-200 hover:border-navy-400 hover:bg-navy-50'
+                  }`}
+                >
+                  <div className="flex items-start gap-4">
+                    <span className={`inline-flex items-center justify-center w-8 h-8 rounded-full text-base font-bold flex-shrink-0 ${
+                      selectedOption === index
+                        ? 'bg-white text-navy-700'
+                        : 'bg-navy-100 text-navy-600'
+                    }`}>
+                      {String.fromCharCode(65 + index)}
+                    </span>
+                    <span className="leading-relaxed">{option.text}</span>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // 結果画面コンポーネント
+    function ResultScreen({ result, onRetry, onShare }) {
+      const type = investorTypes[result];
+
+      return (
+        <div className="fade-in max-w-2xl mx-auto px-4 py-8">
+          {/* 結果ヘッダー */}
+          <div className="text-center mb-6">
+            <p className="text-xl text-navy-600 mb-4">あなたの投資スタイルは...</p>
+          </div>
+
+          {/* タイプカード */}
+          <div className={`bg-gradient-to-br ${type.color} rounded-2xl shadow-xl p-6 md:p-8 mb-6 text-white`}>
+            <div className="text-center">
+              <span className="text-7xl mb-4 inline-block">{type.emoji}</span>
+              <h2 className="text-3xl md:text-4xl font-bold mb-2">{type.name}</h2>
+              <p className="text-xl opacity-90">{type.title}</p>
+            </div>
+          </div>
+
+          {/* 詳細カード */}
+          <div className="bg-white rounded-2xl shadow-lg p-6 md:p-8 space-y-6">
+            {/* 説明 */}
+            <div>
+              <p className="text-lg text-navy-700 leading-relaxed">
+                {type.description}
+              </p>
+            </div>
+
+            {/* リスク許容度・投資期間 */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-navy-50 rounded-xl p-4 text-center">
+                <p className="text-navy-500 text-sm mb-1">リスク許容度</p>
+                <p className="text-xl font-bold text-navy-700">{type.riskTolerance}</p>
+              </div>
+              <div className="bg-navy-50 rounded-xl p-4 text-center">
+                <p className="text-navy-500 text-sm mb-1">投資期間</p>
+                <p className="text-xl font-bold text-navy-700">{type.timeHorizon}</p>
+              </div>
+            </div>
+
+            {/* 強み */}
+            <div className="border-t border-navy-100 pt-6">
+              <h3 className="flex items-center gap-2 text-xl font-bold text-navy-800 mb-4">
+                <span>💪</span>
+                <span>あなたの強み</span>
+              </h3>
+              <ul className="space-y-3">
+                {type.strengths.map((strength, index) => (
+                  <li key={index} className="flex items-start gap-3 text-navy-700">
+                    <span className="text-gold-500 text-lg">✓</span>
+                    <span className="text-lg">{strength}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* 気をつけるポイント */}
+            <div className="border-t border-navy-100 pt-6">
+              <h3 className="flex items-center gap-2 text-xl font-bold text-navy-800 mb-4">
+                <span>⚠️</span>
+                <span>気をつけるポイント</span>
+              </h3>
+              <ul className="space-y-3">
+                {type.weaknesses.map((weakness, index) => (
+                  <li key={index} className="flex items-start gap-3 text-navy-600">
+                    <span className="text-amber-500 text-lg">•</span>
+                    <span className="text-lg">{weakness}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* アドバイス */}
+            <div className="border-t border-navy-100 pt-6">
+              <h3 className="flex items-center gap-2 text-xl font-bold text-navy-800 mb-4">
+                <span>💡</span>
+                <span>アドバイス</span>
+              </h3>
+              <p className="text-lg text-navy-700 leading-relaxed bg-gold-50 p-4 rounded-xl border-l-4 border-gold-400">
+                {type.advice}
+              </p>
+            </div>
+
+            {/* おすすめの投資 */}
+            <div className="border-t border-navy-100 pt-6">
+              <h3 className="flex items-center gap-2 text-xl font-bold text-navy-800 mb-4">
+                <span>📈</span>
+                <span>おすすめの投資方法</span>
+              </h3>
+              <div className="space-y-3">
+                {type.recommendations.map((rec, index) => (
+                  <div key={index} className="flex items-center gap-3 bg-navy-50 p-4 rounded-xl">
+                    <span className="text-2xl">
+                      {index === 0 ? '🥇' : index === 1 ? '🥈' : '🥉'}
+                    </span>
+                    <span className="text-lg text-navy-700">{rec}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* アクションボタン */}
+          <div className="mt-6 space-y-4">
+            {/* シェアボタン */}
+            <div className="flex gap-3">
+              <button
+                onClick={() => onShare('twitter')}
+                className="flex-1 py-3 px-4 bg-[#1DA1F2] text-white font-bold rounded-xl hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
+              >
+                <span>𝕏</span>
+                <span>共有</span>
+              </button>
+              <button
+                onClick={() => onShare('line')}
+                className="flex-1 py-3 px-4 bg-[#00B900] text-white font-bold rounded-xl hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
+              >
+                <span>LINE</span>
+              </button>
+              <button
+                onClick={() => onShare('copy')}
+                className="flex-1 py-3 px-4 bg-navy-200 text-navy-700 font-bold rounded-xl hover:bg-navy-300 transition-colors flex items-center justify-center gap-2"
+              >
+                <span>📋</span>
+                <span>コピー</span>
+              </button>
+            </div>
+
+            {/* リトライボタン */}
+            <button
+              onClick={onRetry}
+              className="w-full py-4 px-8 bg-white text-navy-700 text-lg font-bold rounded-xl border-2 border-navy-200 hover:border-navy-400 hover:bg-navy-50 transition-all"
+            >
+              もう一度診断する
+            </button>
+          </div>
+
+          {/* フッターCTA */}
+          <div className="mt-8 bg-gradient-to-r from-navy-700 to-navy-800 rounded-2xl p-6 text-white text-center">
+            <h3 className="text-xl font-bold mb-2">
+              資産運用のご相談はお気軽に
+            </h3>
+            <p className="opacity-90 mb-4">
+              経験豊富な専門家が、あなたに合った<br />資産運用プランをご提案いたします
+            </p>
+            <button className="py-3 px-8 bg-white text-navy-700 font-bold rounded-xl hover:bg-navy-50 transition-colors">
+              無料相談を予約する
+            </button>
+          </div>
+
+          {/* 注意書き */}
+          <p className="mt-6 text-center text-navy-500 text-sm leading-relaxed">
+            ※ 本診断結果は参考情報であり、投資の成果を保証するものではございません。<br />
+            実際の投資は、ご自身の判断と責任のもとで行ってください。
+          </p>
+        </div>
+      );
+    }
+
+    // メインアプリケーション
+    function InvestorDiagnostic() {
+      const [screen, setScreen] = useState('start');
+      const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+      const [scores, setScores] = useState({ owl: 0, turtle: 0, eagle: 0, elephant: 0 });
+      const [result, setResult] = useState(null);
+
+      const handleStart = () => {
+        setScreen('question');
+        setCurrentQuestionIndex(0);
+        setScores({ owl: 0, turtle: 0, eagle: 0, elephant: 0 });
+      };
+
+      const handleAnswer = (optionScores) => {
+        const newScores = {
+          owl: scores.owl + optionScores.owl,
+          turtle: scores.turtle + optionScores.turtle,
+          eagle: scores.eagle + optionScores.eagle,
+          elephant: scores.elephant + optionScores.elephant,
+        };
+        setScores(newScores);
+
+        if (currentQuestionIndex < questions.length - 1) {
+          setCurrentQuestionIndex(currentQuestionIndex + 1);
+        } else {
+          // 結果を計算
+          const maxScore = Math.max(newScores.owl, newScores.turtle, newScores.eagle, newScores.elephant);
+          const resultType = Object.keys(newScores).find(key => newScores[key] === maxScore);
+          setResult(resultType);
+          setScreen('result');
+        }
+      };
+
+      const handleRetry = () => {
+        setScreen('start');
+        setCurrentQuestionIndex(0);
+        setScores({ owl: 0, turtle: 0, eagle: 0, elephant: 0 });
+        setResult(null);
+      };
+
+      const handleShare = (platform) => {
+        const type = investorTypes[result];
+        const shareText = `私の投資スタイルは「${type.emoji} ${type.name}」でした！\n${type.title}\n\n#投資スタイル診断 #資産運用`;
+        const shareUrl = window.location.href;
+
+        if (platform === 'twitter') {
+          window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`, '_blank');
+        } else if (platform === 'line') {
+          window.open(`https://social-plugins.line.me/lineit/share?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`, '_blank');
+        } else if (platform === 'copy') {
+          navigator.clipboard.writeText(`${shareText}\n${shareUrl}`);
+          alert('クリップボードにコピーしました');
+        }
+      };
+
+      return (
+        <div className="min-h-screen bg-gradient-to-b from-navy-50 to-navy-100">
+          {/* ヘッダー */}
+          <header className="bg-white shadow-sm">
+            <div className="max-w-2xl mx-auto px-4 py-4">
+              <div className="flex items-center justify-center gap-2">
+                <span className="text-2xl">📊</span>
+                <span className="text-xl font-bold text-navy-800">投資スタイル診断</span>
+              </div>
+            </div>
+          </header>
+
+          {/* メインコンテンツ */}
+          <main className="pb-8">
+            {screen === 'start' && <StartScreen onStart={handleStart} />}
+            {screen === 'question' && (
+              <QuestionScreen
+                question={questions[currentQuestionIndex]}
+                questionIndex={currentQuestionIndex}
+                totalQuestions={questions.length}
+                onAnswer={handleAnswer}
+              />
+            )}
+            {screen === 'result' && (
+              <ResultScreen
+                result={result}
+                onRetry={handleRetry}
+                onShare={handleShare}
+              />
+            )}
+          </main>
+
+          {/* フッター */}
+          <footer className="bg-navy-800 text-white py-6">
+            <div className="max-w-2xl mx-auto px-4 text-center">
+              <p className="text-navy-300 text-sm">
+                © 2024 投資スタイル診断 All rights reserved.
+              </p>
+            </div>
+          </footer>
+        </div>
+      );
+    }
+
+    // レンダリング
+    ReactDOM.createRoot(document.getElementById('root')).render(<InvestorDiagnostic />);
+  </script>
+</body>
+</html>
